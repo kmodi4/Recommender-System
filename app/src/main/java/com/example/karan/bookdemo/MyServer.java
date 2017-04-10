@@ -5,5 +5,12 @@ package com.example.karan.bookdemo;
  */
 public interface MyServer  {
 
-    String MyServerUrl = "http://kmodi4.net76.net/BookDemo/";
+    String genimotion = "10.0.3.2";
+    String router = "10.0.0.2";
+    String emulator = "10.0.2.2";
+
+    String Localhost = genimotion;
+    String MyServerUrl = "http://"+Localhost+":3000/api/"; //"http://kmodi4.net76.net/BookDemo/";
+
+
 }

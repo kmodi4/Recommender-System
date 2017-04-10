@@ -116,9 +116,6 @@
             android:label="Chat"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".gps"
-            android:label="@string/title_activity_location" />
-        <activity
             android:name=".SellerInfo"
             android:label="@string/title_activity_seller_info" />
         <activity

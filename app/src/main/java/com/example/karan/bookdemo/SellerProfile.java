@@ -15,6 +15,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.error.VolleyError;
 import com.android.volley.request.JsonArrayRequest;
+import com.android.volley.request.JsonObjectRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,7 +30,7 @@ public class SellerProfile extends AppCompatActivity implements MyServer {
     TextView tv,sname,semail,sphone,sadress,sabout;
     private RequestQueue mqueue;
     private AlertDialog dialog;
-    private static final String url = MyServerUrl+"seller_detail.php";
+    private static  String url = MyServerUrl+"getUser/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,12 +50,14 @@ public class SellerProfile extends AppCompatActivity implements MyServer {
             if(b.containsKey("seller")){
                 seller = b.getString("seller");
                 tv.setText(seller);
+                url+=seller;
                 dialog = new SpotsDialog(this, R.style.Custom2);
                 dialog.show();
                 VolleyConnect();
             }
             else if (b.containsKey("username")){
                 user = b.getString("username");
+                url+=user;
                 tv.setText(user);
             }
 
@@ -63,27 +66,13 @@ public class SellerProfile extends AppCompatActivity implements MyServer {
 
     public void VolleyConnect(){
 
-        JSONObject jo= new JSONObject();
-        JSONArray ja = new JSONArray();
-        try {
-            jo.put("seller",seller);
-            ja.put(jo);
-            Log.e("Jarray:",ja.toString());
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-
-        JsonArrayRequest mreq = new JsonArrayRequest(Request.Method.POST,url, ja, new Response.Listener<JSONArray>() {
+        JsonObjectRequest mreq = new JsonObjectRequest(url,null, new Response.Listener<JSONObject>() {
             @Override
-            public void onResponse(JSONArray response) {
-                Log.e("reponce:",String.valueOf(response.length()));
-                dialog.dismiss();
-                for (int i=0;i<response.length();i++){
+            public void onResponse(JSONObject response) {
+                     dialog.dismiss();
                     JSONObject jo;
                     try {
-                        jo = response.getJSONObject(i);
+                        jo = response;
                          name = jo.getString("Name");
                          email = jo.getString("EmailID");
                          phNo = jo.getString("Phoneno");
@@ -98,7 +87,7 @@ public class SellerProfile extends AppCompatActivity implements MyServer {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                }
+
 
 
             }

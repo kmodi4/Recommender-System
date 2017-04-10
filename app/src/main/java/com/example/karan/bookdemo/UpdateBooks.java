@@ -44,7 +44,7 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
     private ListView mylist;
     private TextView tv;
     private List<listinfo> data;
-    private static final String url = MyServerUrl+"MyInventory.php";
+    private static final String url = MyServerUrl+"getUserBooks";
     private SharedPreferences sharedPreferences;
     private String sellername;
     private RInventoryAdapter rInventoryAdapter;
@@ -108,15 +108,15 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
 
     public void VolleyConnect(){
         sharedPreferences = getSharedPreferences("UserDetail", Context.MODE_PRIVATE);
-        sellername = sharedPreferences.getString("sellerid","");
+        sellername = sharedPreferences.getString("sellerid","").toLowerCase();
         data.clear();
         startprogress();
         JSONObject jo = new JSONObject();
         JSONArray ja = new JSONArray();
         try {
-            jo.put("seller",sellername);
+            jo.put("username",sellername);
             ja.put(jo);
-            Log.e("json",ja.toString());
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -124,7 +124,7 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
         JsonArrayRequest mreq = new JsonArrayRequest(Request.Method.POST, url, ja, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
-               // Log.e("Respponce",String.valueOf(response.length()));
+
                 StopProgress();
                 if (response!=null) {
                     tv.setText(String.valueOf(response.length()));
@@ -137,6 +137,9 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
                             current.yourprice = jo.getInt("yourprice");
                             current.originalprice = jo.getInt("originalprice");
                             current.url = jo.getString("imgUrl");
+                            StringBuilder sb = new StringBuilder(current.url);
+                            sb.replace(nthsearch(current.url,'/',2),nthsearch(current.url,':',2)-1,Localhost);
+                            current.url = sb.toString();
                             data.add(current);
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -147,7 +150,7 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
                         // Toast.makeText(getApplicationContext(),"success",Toast.LENGTH_SHORT).show();
 
                     }
-                    Log.e("dataSize", String.valueOf(data.size()));
+
                     rInventoryAdapter = new RInventoryAdapter(UpdateBooks.this, data);
                     AlphaInAnimationAdapter alphaAdapter = new AlphaInAnimationAdapter(rInventoryAdapter);
                     recyclerView.setAdapter(new ScaleInAnimationAdapter(alphaAdapter));
@@ -172,27 +175,39 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
 
     }
 
+    public static int nthsearch(String str, char ch, int n){
+        int pos=0;
+        if(n!=0){
+            for(int i=1; i<=n;i++){
+                pos = str.indexOf(ch, pos)+1;
+            }
+            return pos;
+        }
+        else{
+            return 0;
+        }
+    }
+
     public void VolleyUpdate(int yp){
 
-        String Url = MyServerUrl+"UpdatePrice.php";
+        String Url = MyServerUrl+"updateBook";
         ed = sh.edit();
         JSONObject jo = new JSONObject();
         listinfo lf = data.get(ItemPosition);
         try {
-            jo.put("seller",sellername);
+            jo.put("username",sellername);
             jo.put("title",lf.title);
             jo.put("yourprice",yp);
-            Log.e("jsonUpdate",jo.toString());
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        JsonObjectRequest mreq1 = new JsonObjectRequest(Request.Method.POST, Url, jo, new Response.Listener<JSONObject>() {
+        JsonObjectRequest mreq1 = new JsonObjectRequest(Request.Method.PUT, Url, jo, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
                 try {
                     String msg = response.getString("message");
-                    int success = response.getInt("success");
                     Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_SHORT).show();
                     ed.putBoolean("update",true);
                     ed.apply();
@@ -209,7 +224,8 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
             public void onErrorResponse(VolleyError error) {
                 ed.clear();
                 ed.apply();
-                Toast.makeText(getApplicationContext(),"Error in Coonecting",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"Error in Connecting",Toast.LENGTH_SHORT).show();
+                Log.d("error:-",error.toString());
             }
         });
 
@@ -219,23 +235,25 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
 
     public void VolleyDel(){
 
-        String Url = MyServerUrl+"DeleteBook.php";
+
         ed = sh.edit();
-        JSONObject jo = new JSONObject();
         listinfo lf = data.get(ItemPosition);
+        String Url = MyServerUrl+"deletebook";
+        Log.d("url",Url);
+        JSONObject jo = new JSONObject();
         try {
-            jo.put("seller",sellername);
+            jo.put("username",sellername);
             jo.put("title",lf.title);
+            Log.d("jo:",jo.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        JsonObjectRequest mreq2 = new JsonObjectRequest(Request.Method.POST, Url, jo, new Response.Listener<JSONObject>() {
+        JsonObjectRequest mreq2 = new JsonObjectRequest(Request.Method.PUT, Url,jo, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
                 try {
-                    String msg = response.getString("message");
-                    int success = response.getInt("success");
+                    String msg = response.getString("msg");
                     Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_SHORT).show();
                     ed.putBoolean("update",true);
                     ed.apply();
@@ -244,6 +262,7 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
 
                 } catch (JSONException e) {
                     e.printStackTrace();
+                    Log.d("jsonErr:",e.toString());
                 }
 
             }
@@ -252,7 +271,8 @@ public class UpdateBooks extends AppCompatActivity implements CustDialog.MyClick
             public void onErrorResponse(VolleyError error) {
                 ed.clear();
                 ed.apply();
-                Toast.makeText(getApplicationContext(),"Error in Coonecting",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"Error in Connecting",Toast.LENGTH_SHORT).show();
+                Log.d("err:",error.toString());
             }
         });
         mqueue.add(mreq2);

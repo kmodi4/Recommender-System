@@ -29,6 +29,7 @@ public class RVadapter extends RecyclerView.Adapter<RVadapter.Myviewholder> {
         context = c;
         this.data = data;
         //onCallback = (OnCallback) c;
+
     }
 
 

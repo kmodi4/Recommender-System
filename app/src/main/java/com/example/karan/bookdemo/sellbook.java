@@ -21,9 +21,7 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -48,7 +46,7 @@ public class sellbook extends AppCompatActivity implements MyServer {
 
     private EditText isbn, btitle, auth, bedition,
             bcondi, publisher, pages, oriprice, yprice, desc, phno;
-    private static final String LOGIN_URL = MyServerUrl+"uploadBook.php";    //url of your php file
+    private static final String uploadUrl = MyServerUrl+"addBook";
     RequestQueue mQueue11;
     private ProgressDialog pDialog;
     String manual="";
@@ -63,7 +61,7 @@ public class sellbook extends AppCompatActivity implements MyServer {
     TextWatcher isbnWatcher;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
-    private String username;
+    private String username,genre="other";
     String imagelink = "";
 
     @Override
@@ -114,7 +112,6 @@ public class sellbook extends AppCompatActivity implements MyServer {
 
             public void afterTextChanged(Editable s) {
                 if (s.length() == 10 || s.length() == 13) {
-                    //Toast.makeText(sellbook.this, "Number Entered", Toast.LENGTH_SHORT).show();
                      fetchdetails(isbn.getText().toString());
                 }
             }
@@ -139,16 +136,12 @@ public class sellbook extends AppCompatActivity implements MyServer {
             }
         });
 
-
-
         isbn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 isbnDialog();
             }
         });
-
-
 
     }
 
@@ -192,10 +185,8 @@ public class sellbook extends AppCompatActivity implements MyServer {
     }
 
     public void loadImagefromGallery() {
-        // Create intent to Open Image applications like Gallery, Google Photos
         Intent galleryIntent = new Intent(Intent.ACTION_PICK,
                 android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        // Start the Intent
         startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
     }
 
@@ -213,8 +204,6 @@ public class sellbook extends AppCompatActivity implements MyServer {
             if (resultCode == Result_Code) {
                 if (data.getExtras().containsKey("decode")) {
                     isbn.setText(data.getExtras().getString("decode"));
-
-                    //Toast.makeText(getApplicationContext(), "Detected Format " + data.getExtras().getString("format"), Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -222,7 +211,6 @@ public class sellbook extends AppCompatActivity implements MyServer {
                 else if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK) {
                     myImg = (Bitmap) data.getExtras().get("data");
                 try {
-                    Log.e("img",myImg.toString());
                     imageView.setImageBitmap(myImg);
                 }catch (NullPointerException e){
                     Toast.makeText(getApplicationContext(),"Coudn't fetch image",Toast.LENGTH_SHORT).show();
@@ -241,13 +229,11 @@ public class sellbook extends AppCompatActivity implements MyServer {
                         cursor.close();
                     }
 
-
                     String fileNameSegments[] = picturePath.split("/");
                     fileName = fileNameSegments[fileNameSegments.length - 1];
-                    //fileName="karan.jpeg";
-
                     myImg = BitmapFactory.decodeFile(picturePath);
                     imageView.setImageBitmap(myImg);
+
                 }catch (NullPointerException e){
                     Toast.makeText(getApplicationContext(),"Coudn't fetch image",Toast.LENGTH_SHORT).show();
                 }
@@ -256,18 +242,20 @@ public class sellbook extends AppCompatActivity implements MyServer {
                 Toast.makeText(getApplicationContext(),"Coudn't fetch image",Toast.LENGTH_SHORT).show();
             }
                if (myImg != null) {
-                   ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                   // Must compress the Image to reduce image size to make upload easy
-                   myImg.compress(Bitmap.CompressFormat.PNG, 50, stream);
-                   byte[] byte_arr = stream.toByteArray();
-                   // Encode Image to String
-                   encodedString = Base64.encodeToString(byte_arr, 0);
-                   // t1.setText(fileName);
+                   new Thread(new Runnable() {
+                       @Override
+                       public void run() {
+
+                               ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                               myImg.compress(Bitmap.CompressFormat.PNG, 50, stream);
+                               byte[] byte_arr = stream.toByteArray();
+                               encodedString = Base64.encodeToString(byte_arr, 0);
+
+                       }
+                   }).start();
+
                }
             }
-
-
-
 
 
     public void fetchdetails(String isbnNo){
@@ -275,7 +263,6 @@ public class sellbook extends AppCompatActivity implements MyServer {
         startprogress();
 
         String myurl = "https://www.googleapis.com/books/v1/volumes?q=isbn:"+isbnNo;
-        Log.e("myurl:",myurl);
 
         JsonObjectRequest myReq = new JsonObjectRequest(Request.Method.GET,
                 myurl,null,
@@ -309,10 +296,8 @@ public class sellbook extends AppCompatActivity implements MyServer {
                                                 try {
                                                     myImg = Glide.with(sellbook.this).load(imagelink).asBitmap().into(-1,-1).get();
                                                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                                    // Must compress the Image to reduce image size to make upload easy
                                                     myImg.compress(Bitmap.CompressFormat.PNG, 50, stream);
                                                     byte[] byte_arr = stream.toByteArray();
-                                                    // Encode Image to String
                                                     encodedString = Base64.encodeToString(byte_arr, 0);
 
                                                     runOnUiThread(new Runnable() {
@@ -327,9 +312,6 @@ public class sellbook extends AppCompatActivity implements MyServer {
                                             }
                                         }).start();
 
-
-
-
                                 }
 
                                 int pagecount = volumeInfo.getInt("pageCount");
@@ -338,16 +320,15 @@ public class sellbook extends AppCompatActivity implements MyServer {
                                 publisher.setText(publish);
                                 String description = volumeInfo.getString("description");
                                 desc.setText(description);
-                                String cat = volumeInfo.getJSONArray("categories").getString(0);
-
+                                String cat = "other";
+                                if(volumeInfo.getJSONArray("categories")!=null)
+                                    cat  = volumeInfo.getJSONArray("categories").getString(0);
+                                genre = cat;
                             }
-
-
 
                             } catch (JSONException e) {
                             e.printStackTrace();
                             Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
-
                         }
 
                     }
@@ -384,8 +365,9 @@ public class sellbook extends AppCompatActivity implements MyServer {
 
     private void volleyconnect() {
 
-            //Toast.makeText(getApplicationContext(),username+"\n"+getstr(oriprice),Toast.LENGTH_LONG).show();
-            if (getstr(oriprice).equals("") || getstr(yprice).equals("")) {
+            if (getstr(oriprice).equals("") || getstr(yprice).equals("") || getstr(isbn).equals("") ||  getstr(btitle).equals("") ||
+                    getstr(auth).equals("") ||  getstr(bedition).equals("")  ||  getstr(bcondi).equals("") ||  getstr(publisher).equals("")
+                    ||  getstr(pages).equals("") ||  getstr(desc).equals("") || encodedString.equals("") ) {
                 Toast.makeText(getApplicationContext(),"Empty Fileds",Toast.LENGTH_LONG).show();
 
             } else {
@@ -393,29 +375,29 @@ public class sellbook extends AppCompatActivity implements MyServer {
                 JSONObject jo = new JSONObject();
                 try {
 
+                    jo.put("Username", username);
+                    jo.put("isbn", getstr(isbn));
+                    jo.put("title", getstr(btitle));
+                    jo.put("author", getstr(auth));
+                    jo.put("edition", getstr(bedition));
+                    jo.put("condition", getstr(bcondi));
+                    jo.put("publisher", getstr(publisher));
+                    jo.put("pages", Integer.parseInt(getstr(pages)));
+                    jo.put("originalprice", Integer.parseInt(getstr(oriprice)));
+                    jo.put("yourprice", Integer.parseInt(getstr(yprice)));
+                    jo.put("desc", getstr(desc));
+                    jo.put("genre",genre);
+                        jo.put("base64", encodedString);
+                        jo.put("fromgoogle",false);
 
-                jo.put("user", username);
-                jo.put("isbn", getstr(isbn));
-                jo.put("title", getstr(btitle));
-                jo.put("author", getstr(auth));
-                jo.put("edition", getstr(bedition));
-                jo.put("condition", getstr(bcondi));
-                jo.put("publisher", getstr(publisher));
-                jo.put("pages", Integer.parseInt(getstr(pages)));
-                jo.put("originalprice", Integer.parseInt(getstr(oriprice)));
-                jo.put("yourprice", Integer.parseInt(getstr(yprice)));
-                jo.put("desc", getstr(desc));
-                    jo.put("image", encodedString);
-
-                    Log.e("json:",jo.toString());
-
+                        Log.e("json:",jo.toString());
 
             }catch(JSONException e){
                 e.printStackTrace();
             }
 
             JsonObjectRequest myReq = new JsonObjectRequest(Request.Method.POST,
-                    LOGIN_URL,
+                    uploadUrl,
                     jo,
                     new Response.Listener<JSONObject>() {
                         @Override
@@ -426,8 +408,6 @@ public class sellbook extends AppCompatActivity implements MyServer {
                                 int success = response.getInt("success");
                                 if (success == 1) {
                                     Intent i = new Intent(sellbook.this, MainActivity.class);
-                                    //i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                    //i.putExtra("name", username);
                                     i.putExtra("refresh",true);
                                     startActivity(i);
                                     finish();

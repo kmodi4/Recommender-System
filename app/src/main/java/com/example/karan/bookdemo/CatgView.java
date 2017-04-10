@@ -9,6 +9,13 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.error.VolleyError;
+import com.android.volley.request.JsonArrayRequest;
+
+import org.json.JSONArray;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +28,7 @@ public class CatgView extends AppCompatActivity {
 
     RecyclerView recyclerView;
     RVadapter RVadapter;
+    private RequestQueue mqueue;
     private List<listinfo> data;
 
 
@@ -34,7 +42,8 @@ public class CatgView extends AppCompatActivity {
             setSupportActionBar(toolbar);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-
+        MyVolley.init(this);
+        mqueue = MyVolley.getRequestQueue();
         Bundle b = getIntent().getExtras();
         if (b!=null){
             data = b.getParcelableArrayList("object");
@@ -56,6 +65,20 @@ public class CatgView extends AppCompatActivity {
        // recyclerView.setAdapter(RVadapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         recyclerView.setHasFixedSize(true);
+    }
+
+    public void VolleyRequest(){
+        JsonArrayRequest ja = new JsonArrayRequest("", new Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        });
     }
 
 

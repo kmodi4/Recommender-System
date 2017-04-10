@@ -10,7 +10,6 @@
     <ViewFlipper
         android:layout_width="match_parent"
         android:layout_height="150dp"
-        android:layout_marginTop="15dp"
         android:id="@+id/viewFlipper">
     </ViewFlipper>
 
@@ -63,14 +62,14 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="5dp"
         android:id="@+id/rel2">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="25dp"
             android:id="@+id/textView5"
-            android:text="@string/trend"
+            android:text="Recentaly Added"
             android:textStyle="bold"
             android:layout_marginStart="10dp"
             android:layout_marginLeft="10dp"
@@ -95,7 +94,39 @@
             android:layout_width="match_parent"
             android:layout_height="150dp"
             android:layout_below="@+id/textView5"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginTop="2dp">
+
+        </android.support.v7.widget.RecyclerView>
+    </RelativeLayout>
+
+    <View style="@style/Divider"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:visibility="gone"
+        android:layout_marginTop="5dp"
+        android:id="@+id/rel3">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="25dp"
+            android:id="@+id/textView7"
+            android:text="Recentaly Viewed"
+            android:textStyle="bold"
+            android:layout_marginStart="10dp"
+            android:layout_marginLeft="10dp"
+            android:textSize="18sp"/>
+
+
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycleview2"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:layout_below="@+id/textView7"
+            android:layout_marginBottom="5dp"
             android:layout_marginTop="2dp">
 
         </android.support.v7.widget.RecyclerView>

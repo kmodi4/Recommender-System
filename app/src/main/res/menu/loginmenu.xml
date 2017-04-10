@@ -13,14 +13,7 @@
         android:id="@+id/sell_book"
         android:icon="@drawable/book52"
         android:title="Sell-Book" />
-    <item
-        android:id="@+id/nearby"
-        android:icon="@drawable/nearme"
-        android:title="NearBy" />
-    <item
-        android:id="@+id/set"
-        android:icon="@drawable/settings48"
-        android:title="Setting" />
+
     <item
         android:id="@+id/lo"
         android:icon="@drawable/logout"

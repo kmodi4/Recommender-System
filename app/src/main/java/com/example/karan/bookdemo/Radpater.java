@@ -43,9 +43,7 @@ public class Radpater extends RecyclerView.Adapter<Radpater.Myviewholder> {
 
         final listinfo current = data.get(position);
         holder.title.setText(current.title);
-       // holder.title.append("\nPrice: "+current.yourprice);
-        Log.i("title", current.title);
-       // holder.icon.setImageResource(current.icon);
+
         Glide.with(context)
                 .load(current.url)
                 .crossFade()
@@ -60,8 +58,6 @@ public class Radpater extends RecyclerView.Adapter<Radpater.Myviewholder> {
                // i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 i.putExtra("image",current.url);
                 i.putExtra("title",current.title);
-                i.putExtra("yourprice",current.yourprice);
-                i.putExtra("originalprice",current.originalprice);
                 i.putExtra("seller",current.seller);
                 context.startActivity(i);
             }

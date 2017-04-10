@@ -25,7 +25,7 @@ import org.json.JSONObject;
 public class signup extends AppCompatActivity implements MyServer{
 
     private EditText nam,pass,email,num,username,confimpass;
-    private static final String LOGIN_URL = MyServerUrl+"registration.php";    //url of your php file
+    private static final String register_Url = MyServerUrl+"register";
     RequestQueue mQueue11;
     private ProgressDialog pDialog;
     Button reg;
@@ -39,7 +39,6 @@ public class signup extends AppCompatActivity implements MyServer{
             setSupportActionBar(toolbar);
             //getSupportActionBar().setHomeButtonEnabled(true);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
             //getSupportActionBar().setTitle(getTitle());
         }
         nam = (EditText) findViewById(R.id.name);
@@ -102,29 +101,27 @@ public class signup extends AppCompatActivity implements MyServer{
             startprogress();
             JSONObject jo = new JSONObject();
             try {
-                jo.put("name", name);
-                jo.put("user", uname);
-                jo.put("password", password);
-                jo.put("email", emailid);
-                jo.put("phoneno", number);
+                jo.put("Name", name);
+                jo.put("Username", uname);
+                jo.put("EmailID", emailid);
+                jo.put("Password", password);
+                jo.put("Phoneno", number);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
             JsonObjectRequest myReq = new JsonObjectRequest(Request.Method.POST,
-                    LOGIN_URL,
+                    register_Url,
                     jo,
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
                             pDialog.dismiss();
                             try {
-                                Toast.makeText(getApplicationContext(), response.getString("message"), Toast.LENGTH_SHORT).show();
-                                int success = response.getInt("success");
-                                if (success == 1) {
+                                Toast.makeText(getApplicationContext(), response.getString("msg"), Toast.LENGTH_SHORT).show();
+                                boolean success = response.getBoolean("success");
+                                if (success) {
                                     Intent i = new Intent(signup.this, login.class);
-                                    //i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                    //i.putExtra("name", username);
                                     startActivity(i);
                                     finish();
                                 }

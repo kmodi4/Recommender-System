@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,7 +52,11 @@ public class RGridView extends AppCompatActivity {
         recyclerView.setAdapter(adpater);
         //recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        StaggeredGridLayoutManager gm = new StaggeredGridLayoutManager(3,StaggeredGridLayoutManager.VERTICAL);
+        //gm.setReverseLayout(true);
+        //gm.setStackFromEnd(true);
+
+        recyclerView.setLayoutManager(gm);
     }
 
 

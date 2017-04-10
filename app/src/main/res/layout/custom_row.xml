@@ -16,6 +16,7 @@
             android:id="@+id/custImg"
             android:layout_width="100dp"
             android:layout_height="115dp"
+            android:scaleType="fitXY"
             android:src="@mipmap/ic_launcher" />
 
         <LinearLayout

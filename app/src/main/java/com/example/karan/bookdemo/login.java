@@ -78,8 +78,7 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
     LoginButton loginButton;
     Profile newProfile;
     private CallbackManager callbackManager;
-    private boolean mIntentInProgress;
-    private boolean signedInUser;
+    private boolean mIntentInProgress,signedInUser;
     private ConnectionResult mConnectionResult;
     private SignInButton signinButton;
     private LinearLayout profileFrame, signinFrame;
@@ -87,13 +86,10 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
     private TextView username, emailLabel,mStatusTextView;
     private Button signout,login;
     private EditText user,pass;
-    private static final String LOGIN_URL = MyServerUrl+"login.php";    //url of your php file
+    private static final String LOGIN_URL = MyServerUrl+"authenticate";
     RequestQueue mQueue11;
     private ProgressDialog pDialog;
-    String personEmail = "";
-    String personId = "";
-    String personPhoto="";
-    String pname="";
+    String personEmail = "",personId = "",personPhoto="",pname="";
     private Boolean gl;
     AccessTokenTracker accessTokenTracker;
     ProfileTracker profileTracker;
@@ -109,16 +105,9 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
         callbackManager = CallbackManager.Factory.create();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_detail);
-        /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar1);
-        if (toolbar != null) {
-            setSupportActionBar(toolbar);
-            //getSupportActionBar().setHomeButtonEnabled(true);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-            //getSupportActionBar().setTitle(getTitle());
-        }*/
         loginButton = (LoginButton) findViewById(R.id.login_button);
-        //image = (ImageView) findViewById(R.id.image10);
+
         username = (TextView) findViewById(R.id.username);
 
         //profileFrame = (LinearLayout) findViewById(R.id.profileFrame);
@@ -423,7 +412,6 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
                 userid = userid + personId.substring(len);
                 ed2.putString("Name",pname);
                 ed2.putString("EmailId",personEmail);
-                // ed2.putString("Phoneno",response.getString("Phoneno"));
                 ed2.putString("username",userid);
 
                 editor2.putString("sellerid",userid);
@@ -455,22 +443,12 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
             updateUI(true);
             boolean gout = sharedPreferences.getBoolean("gout",false);
             Log.d("got:",String.valueOf(gout));
-           /* if (gout){
-                editor.putBoolean("gout",false);
 
-                editor.apply();
-                //signOut();
-
-            }*/
-           // signOut();
             if (mGoogleApiClient.isConnected()) {
                 Intent i = new Intent(login.this, MainActivity.class);
                 signOut();
-                //i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 i.putExtra("name", personEmail);
-                // i.putExtra("url",personPhoto);
                 i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
                 startActivity(i);
             }
 
@@ -519,7 +497,7 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
                     });
         //}
 
-        Log.e("After soingout",String.valueOf(mGoogleApiClient.isConnected()));
+        Log.e("After signout",String.valueOf(mGoogleApiClient.isConnected()));
     }
     // [END signOut]
 
@@ -589,8 +567,8 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
 
         JSONObject jo = new JSONObject();
         try {
-            jo.put("username",username);
-            jo.put("password",password);
+            jo.put("name",username);
+            jo.put("pass",password);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -607,12 +585,11 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
                     public void onResponse(JSONObject response) {
                         pDialog.dismiss();
                         try {
-                            Toast.makeText(getApplicationContext(),response.getString("message"),Toast.LENGTH_SHORT).show();
-                            int success = response.getInt("success");
+                            Toast.makeText(getApplicationContext(),response.getString("msg"),Toast.LENGTH_SHORT).show();
+                            boolean success = response.getBoolean("success");
 
-                            if(success==1) {
+                            if(success) {
                                 Intent i = new Intent(login.this, MainActivity.class);
-                                //i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 ed2.putString("Name",response.getString("Name"));
                                 ed2.putString("EmailId",response.getString("EmailId"));
                                 ed2.putString("Phoneno",response.getString("Phoneno"));
@@ -629,8 +606,11 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
                                 startActivity(i);
                                 finish();
                             }
+
+
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            Log.d("jsonError:",e.toString());
                         }
 
                     }
