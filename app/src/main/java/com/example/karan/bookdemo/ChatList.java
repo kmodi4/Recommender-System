@@ -57,7 +57,7 @@ public class ChatList extends AppCompatActivity implements MyServer {
     private static final String TAG = "ChatActivity";
     private String Receiver = "";
     private String regid = "";
-    private static final String LOGIN_URL = MyServerUrl+"Chatgcm.php";
+    private static final String LOGIN_URL = MyServerUrl+"Chatgcm";
     private BroadcastReceiver broadcastReceiver;
     private SharedPreferences sp;
     private BroadcastReceiver mRegistrationBroadcastReceiver;
@@ -335,13 +335,13 @@ public class ChatList extends AppCompatActivity implements MyServer {
 
         Log.i("name:", username);
         try {
-            jo.put("name",username);
+            jo.put("Username",username);
             jo.put("msg",msg);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        JsonObjectRequest myReq = new JsonObjectRequest(Request.Method.POST,
+        JsonObjectRequest myReq = new JsonObjectRequest(Request.Method.PUT,
                 LOGIN_URL,
                 jo,
                 new Response.Listener<JSONObject>() {
@@ -373,11 +373,11 @@ public class ChatList extends AppCompatActivity implements MyServer {
     }
 
     public void volleyconnect(String regid, String name){
-        final String LOGIN_URL = MyServerUrl+"registerId.php";
+        final String LOGIN_URL = MyServerUrl+"registerGcm";
         JSONObject jo = new JSONObject();
         try {
-            jo.put("regid", regid);
-            jo.put("name", name);
+            jo.put("reg_id", regid);
+            jo.put("Username", name);
             Log.i("json:",jo.getString("regid"));
 
         } catch (JSONException e) {
@@ -389,18 +389,8 @@ public class ChatList extends AppCompatActivity implements MyServer {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            //VolleyLog.v("Response:%n %s", response.toString(4));
                             dialog.dismiss();
-                            int i = response.getInt("success");
                             String msg = response.getString("message");
-                            if (i == 1) {
-                                /*Intent ii = new Intent(register.this, MainActivity.class);
-                                finish();
-                                // this finish() method is used to tell android os that we are done with current //activity now! Moving to other activity
-                                startActivity(ii);*/
-                            }
-
-
                             Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
                         } catch (JSONException e) {
                             e.printStackTrace();

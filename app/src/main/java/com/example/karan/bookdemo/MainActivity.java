@@ -35,6 +35,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.error.VolleyError;
 import com.android.volley.request.JsonArrayRequest;
+import com.android.volley.request.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 
 import org.json.JSONArray;
@@ -319,7 +320,9 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
                     nm = b.getString("name");
 
                     Toast.makeText(getApplicationContext(), "Welcome "+nm, Toast.LENGTH_SHORT).show();
-
+                    if(sharedPreferences.getBoolean("fblogin",false) || sharedPreferences.getBoolean("g+",false)){
+                        getUserID();
+                    }
                     newMenu();
                     showKart(true);
                 }
@@ -336,6 +339,41 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
             }
        // mqueue.getCache().invalidate(url,true);
 
+    }
+
+    public void getUserID(){
+
+        final SharedPreferences sh = getSharedPreferences("offlineprofile", Context.MODE_PRIVATE);
+        final SharedPreferences.Editor ed = sh.edit();
+        JSONObject jo = new JSONObject();
+        try {
+            jo.put("Name",sh.getString("Name",""));
+            jo.put("EmailID",sh.getString("EmailId",""));
+            jo.put("Username",sh.getString("username",""));
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        JsonObjectRequest jor = new JsonObjectRequest(Request.Method.POST, MyServerUrl+"getUserID", jo, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    if(response!=null) {
+                        ed.putString("user_id", response.getString("userid"));
+                        ed.apply();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        });
+        mqueue.add(jor);
     }
 
     public void startprogress(){

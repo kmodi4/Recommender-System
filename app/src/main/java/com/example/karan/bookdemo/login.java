@@ -235,7 +235,7 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
                                         ed2.putString("url",url);
                                         ed2.apply();
                                         // String birthday = object.getString("birthday"); // 01/31/1980 format
-                                        Toast.makeText(getApplicationContext(), email, Toast.LENGTH_SHORT).show();
+                                        //Toast.makeText(getApplicationContext(), email, Toast.LENGTH_SHORT).show();
 
                                         editor = sharedPreferences.edit();
                                         editor2 = sharedPreferences2.edit();
@@ -386,8 +386,8 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
-            editor = sharedPreferences.edit();
-            editor2 = sharedPreferences2.edit();
+            editor = sharedPreferences.edit();    //login
+            editor2 = sharedPreferences2.edit();  //userDetails
 
             final SharedPreferences sp2 = getSharedPreferences("offlineprofile",Context.MODE_PRIVATE);
             final SharedPreferences.Editor ed2 = sp2.edit();
@@ -433,7 +433,7 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
             }
 
 
-            Toast.makeText(getApplicationContext(),personEmail+"\n"+personId+"\n"+pname,Toast.LENGTH_LONG).show();
+            //Toast.makeText(getApplicationContext(),personEmail+"\n"+personId+"\n"+pname,Toast.LENGTH_LONG).show();
             if(!(personPhoto.equals(""))){
                // Glide.with(this).load(personPhoto).crossFade().into(img);
                 Log.i("photoUrl:",personPhoto);
@@ -594,10 +594,12 @@ public class login extends AppCompatActivity implements  GoogleApiClient.OnConne
                                 ed2.putString("EmailId",response.getString("EmailId"));
                                 ed2.putString("Phoneno",response.getString("Phoneno"));
                                 ed2.putString("username",username);
+                                ed2.putString("user_id",response.getString("user_id"));
                                 ed2.apply();
                                 i.putExtra("name",username);
                                 editor2.putString("sellerid",username);
                                 editor2.putString("username",username);
+                                editor2.putString("user_id",response.getString("user_id"));
                                 editor2.apply();
                                 i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                                 editor.putBoolean("LStatus", true);

@@ -6,7 +6,7 @@ package com.example.karan.bookdemo;
 public interface MyServer  {
 
     String genimotion = "10.0.3.2";
-    String router = "10.0.0.2";
+    String router = "172.20.10.5";//"10.0.0.2";
     String emulator = "10.0.2.2";
 
     String Localhost = genimotion;

@@ -121,7 +121,6 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:hint="Description"
             android:id="@+id/desc"
-            android:maxLength="254"
             android:layout_gravity="center_horizontal" />
 
         <EditText

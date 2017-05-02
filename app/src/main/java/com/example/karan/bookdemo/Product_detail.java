@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -22,9 +23,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -40,12 +44,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import dmax.dialog.SpotsDialog;
 import jp.wasabeef.recyclerview.animators.adapters.AlphaInAnimationAdapter;
 import jp.wasabeef.recyclerview.animators.adapters.SlideInRightAnimationAdapter;
 
@@ -62,14 +64,16 @@ public class Product_detail extends AppCompatActivity implements MyServer {
     String sellername,title;
     SharedPreferences sharedPreferences,sharedPreferences2;
     boolean status;
-    private String isbn,author,edition,condition,publisher,desc;
+    private String isbn,author,edition,condition,publisher,desc,genre,b_id;
     private RequestQueue mqueue;
     private android.app.AlertDialog dialog;
     private boolean is_desc_clicked = false;
-    private LinearLayout collapsablelayout;
-    private RecyclerView recyclerView;
-    private Radpater radpater;
-    private List<listinfo> data;
+    private LinearLayout collapsablelayout,cflayout;
+    private RecyclerView sim_recyclerView,cf_recycleView;
+    private Radpater sim_radpater,cf_radpater;
+    private List<listinfo> SimilarBookdata,CFBookData;
+    private RatingBar rb;
+    private ProgressBar progressBar,cfPrgressBar;
     private static final String Url = MyServerUrl+"topN";
     private static final String Recent_Viewed = "Recenetly_viewed";
 
@@ -92,9 +96,16 @@ public class Product_detail extends AppCompatActivity implements MyServer {
         pcond = (TextView) findViewById(R.id.pcondition);
         pdesc = (TextView) findViewById(R.id.pdesc);
         pedi = (TextView) findViewById(R.id.pedition);
+
+        rb = (RatingBar) findViewById(R.id.ratingbar);
         features = (TextView) findViewById(R.id.features);
         collapsablelayout = (LinearLayout) findViewById(R.id.collapsable);
-        data = new ArrayList<>();
+        cflayout = (LinearLayout) findViewById(R.id.cflayout);
+        progressBar = (ProgressBar) findViewById(R.id.similar_progress);
+        cfPrgressBar = (ProgressBar) findViewById(R.id.cf_progress);
+
+        SimilarBookdata = new ArrayList<>();
+        CFBookData = new ArrayList<>();
 
         MyVolley.init(this.getApplicationContext());
         mqueue = MyVolley.getRequestQueue();
@@ -108,6 +119,9 @@ public class Product_detail extends AppCompatActivity implements MyServer {
         Bundle b = getIntent().getExtras();
         sharedPreferences = getSharedPreferences("Login", Context.MODE_PRIVATE);
         status = sharedPreferences.getBoolean("LStatus",false);
+        if(status){
+            cflayout.setVisibility(View.VISIBLE);
+        }
         if (b != null) {
             final String url = b.getString("image");
             title = b.getString("title");
@@ -154,27 +168,69 @@ public class Product_detail extends AppCompatActivity implements MyServer {
                 if(collapsablelayout.getVisibility()==View.GONE)
                 {
                     expand();
-                    features.setText("Hide Features");
+                    features.setText("Hide Features ");
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                        features.setCompoundDrawablesRelativeWithIntrinsicBounds(0,0,R.drawable.up_arrow,0);
+                    }
                 }
                 else
                 {
                     collapse();
-                    features.setText("Show Features");
+                    features.setText("Show Features ");
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                        features.setCompoundDrawablesRelativeWithIntrinsicBounds(0,0,R.drawable.down_arrow,0);
+                    }
                 }
             }
         });
 
         sharedPreferences2 = getSharedPreferences("UserDetail",Context.MODE_PRIVATE);
-        recyclerView = (RecyclerView) findViewById(R.id.similarview);
-        radpater = new Radpater(Product_detail.this,data);
-        AlphaInAnimationAdapter alphaAdapter = new AlphaInAnimationAdapter(radpater);
-        recyclerView.setAdapter(new SlideInRightAnimationAdapter(alphaAdapter));
+        sim_recyclerView = (RecyclerView) findViewById(R.id.similarview);
+        sim_radpater = new Radpater(Product_detail.this, SimilarBookdata);
+        AlphaInAnimationAdapter alphaAdapter = new AlphaInAnimationAdapter(sim_radpater);
+        sim_recyclerView.setAdapter(new SlideInRightAnimationAdapter(alphaAdapter));
         //LinearLayoutManager layoutManager= new LinearLayoutManager(this,LinearLayoutManager.HORIZONTAL, false);
-        recyclerView.setLayoutManager(new WrapContentLinearLayoutManager(this,LinearLayoutManager.HORIZONTAL,false));
-        recyclerView.setHasFixedSize(true);
+        sim_recyclerView.setLayoutManager(new WrapContentLinearLayoutManager(this,LinearLayoutManager.HORIZONTAL,false));
+        sim_recyclerView.setHasFixedSize(true);
         fetchSimilarItems();
 
+        cf_recycleView = (RecyclerView) findViewById(R.id.cfview);
+        cf_radpater = new Radpater(Product_detail.this, CFBookData);
+        AlphaInAnimationAdapter alphaAdapter1 = new AlphaInAnimationAdapter(cf_radpater);
+        cf_recycleView.setAdapter(new SlideInRightAnimationAdapter(alphaAdapter1));
+        //LinearLayoutManager layoutManager= new LinearLayoutManager(this,LinearLayoutManager.HORIZONTAL, false);
+        cf_recycleView.setLayoutManager(new WrapContentLinearLayoutManager(this,LinearLayoutManager.HORIZONTAL,false));
+        cf_recycleView.setHasFixedSize(true);
+
+        rb.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+            @Override
+            public void onRatingChanged(RatingBar ratingBar, final float rating, boolean fromUser) {
+                if(fromUser) {
+                    new AlertDialog.Builder(Product_detail.this)
+                            .setTitle("Rating")
+                            .setMessage("Are you sure you want to Update the Rating?")
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // continue with delete
+                                    Log.d("rating", String.valueOf(rating));
+                                    updateRating(rating);
+
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // do nothing
+                                }
+                            })
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .show();
+                }
+            }
+        });
+
     }
+
+
 
     class WrapContentLinearLayoutManager extends LinearLayoutManager{
 
@@ -266,6 +322,7 @@ public class Product_detail extends AppCompatActivity implements MyServer {
                             JSONObject jo;
                             try {
                                 jo = response.getJSONObject(i);
+                                b_id = jo.getString("book_id");
                                 isbn = jo.getString("isbn");
                                 author = jo.getString("author");
                                 edition = jo.getString("edition");
@@ -273,9 +330,13 @@ public class Product_detail extends AppCompatActivity implements MyServer {
                                 publisher = jo.getString("publisher");
                                 pages = jo.getInt("pages");
                                 desc = jo.getString("desc");
+                                genre = jo.getString("genre");
                                 yourprice = jo.getInt("yourprice");
                                 originalprice = jo.getInt("originalprice");
                                 discount = ((originalprice - yourprice) * 100) / originalprice;
+                                if(jo.has("rating")){
+                                    rb.setRating((float)jo.getDouble("rating"));
+                                }
 
 
 
@@ -326,18 +387,17 @@ public class Product_detail extends AppCompatActivity implements MyServer {
                            ja.put(jo);
                         }
 
-
-                        Log.d("lenJA",String.valueOf(ja.length()));
-                        Log.d("lenLS",String.valueOf(set.size()));
-                        Log.d("JSONARRAY:",ja.toString());
-
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
 
                     editor.putString(Recent_Viewed, ja.toString());
                     editor.apply();
-
+                    if(status){
+                        //updatePreference();
+                        implicitRatings();
+                        implict_mf();
+                    }
 
                 }
                 else {
@@ -357,6 +417,115 @@ public class Product_detail extends AppCompatActivity implements MyServer {
             }
         });
         mqueue.add(mreq1);
+    }
+
+    public void updatePreference(){
+        JSONObject jo = new JSONObject();
+        try {
+            jo.put("user_id",sharedPreferences2.getString("user_id",""));
+            jo.put("genre",genre);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest req = new JsonObjectRequest(MyServerUrl+"userPreference", jo, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                       if(response!=null)
+                            Log.d("preResp",response.toString());
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+               Log.d("errPrefrence",error.toString());
+            }
+        });
+
+        mqueue.add(req);
+    }
+
+    public void implicitRatings(){
+        JSONObject jo = new JSONObject();
+        try {
+            jo.put("user_id",sharedPreferences2.getString("user_id",""));
+            jo.put("b_id",b_id);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST, MyServerUrl + "implicitRatings", jo, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                if(response!=null){
+                    Log.d("i_rate",response.toString());
+
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("err",error.toString());
+            }
+        });
+        mqueue.add(req);
+    }
+
+    public void implict_mf(){
+        JSONObject jo = new JSONObject();
+        Log.d("mf","called");
+        try {
+            jo.put("user_id",Integer.parseInt(sharedPreferences2.getString("user_id","0")));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.PUT,MyServerUrl+"matrixFactorization", jo, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+
+                    if(response!=null){
+                        List<Integer> topN = new ArrayList<>();
+                        try {
+                            JSONArray ja = response.getJSONArray("topN");
+                            JSONObject jo;
+                            for(int i=0;i<ja.length();i++){
+                                try {
+                                    jo = ja.getJSONObject(i);
+                                    listinfo current = new listinfo();
+                                    current.title = jo.getString("title");
+                                    if(current.title==title){
+                                        continue;
+                                    }
+                                    current.url = jo.getString("imgUrl");
+                                    StringBuilder sb = new StringBuilder(current.url);
+                                    sb.replace(nthsearch(current.url,'/',2),nthsearch(current.url,':',2)-1,Localhost);
+                                    current.url = sb.toString();
+                                    current.seller = jo.getString("Username");
+                                    current.originalprice = jo.getInt("originalprice");
+                                    current.yourprice = jo.getInt("yourprice");
+                                    CFBookData.add(current);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            Radpater rt = new Radpater(Product_detail.this, CFBookData);
+                            cf_recycleView.swapAdapter(rt,false);
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                cfPrgressBar.setVisibility(View.GONE);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("err_mf",error.toString());
+                cfPrgressBar.setVisibility(View.GONE);
+            }
+        });
+        req.setRetryPolicy(new DefaultRetryPolicy(60*1000,DefaultRetryPolicy.DEFAULT_MAX_RETRIES,DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        mqueue.add(req);
     }
 
     class recent_items{
@@ -396,6 +565,7 @@ public class Product_detail extends AppCompatActivity implements MyServer {
         JsonArrayRequest mreq = new JsonArrayRequest(Request.Method.POST, Url, ja, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
+                progressBar.setVisibility(View.GONE);
                     if(response.length()>0){
                         JSONObject jo;
                         for(int i=0;i<response.length();i++){
@@ -410,21 +580,21 @@ public class Product_detail extends AppCompatActivity implements MyServer {
                                 current.seller = jo.getString("Username");
                                 current.originalprice = jo.getInt("originalprice");
                                 current.yourprice = jo.getInt("yourprice");
-                                data.add(current);
+                                SimilarBookdata.add(current);
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
 
                         }
-                        Radpater rt = new Radpater(Product_detail.this,data);
-                        recyclerView.swapAdapter(rt,false);
+                        Radpater rt = new Radpater(Product_detail.this, SimilarBookdata);
+                        sim_recyclerView.swapAdapter(rt,false);
                     }
 
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                progressBar.setVisibility(View.GONE);
             }
         });
         mqueue.add(mreq);
@@ -442,6 +612,39 @@ public class Product_detail extends AppCompatActivity implements MyServer {
         else{
             return 0;
         }
+    }
+
+    public void updateRating(float rating){
+        JSONObject jo = new JSONObject();
+
+        try {
+            jo.put("title",title);
+            jo.put("username",sellername);
+            jo.put("rating",(double)rating);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest mreq = new JsonObjectRequest(Request.Method.POST,MyServerUrl+"updateRating",jo, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                   if(response!=null){
+                       try {
+                           if(response.getBoolean("success")){
+                               Toast.makeText(getApplicationContext(),response.getString("msg"),Toast.LENGTH_SHORT).show();
+                           }
+                       } catch (JSONException e) {
+                           e.printStackTrace();
+                       }
+                   }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+               Toast.makeText(getApplicationContext(),"Network Error",Toast.LENGTH_SHORT).show();
+            }
+        });
+        mqueue.add(mreq);
     }
 
     private void expand()
